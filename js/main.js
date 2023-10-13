@@ -8,12 +8,6 @@ let _historyIndexInfoSpan;
 let _historyCountInfoSpan;
 
 
-// State.
-
-// TODO: This strategy breaks apart when reloading the page.
-let _historyCount = 1;
-
-
 // Event handling.
 
 function handlePopStateEvent(e) {
@@ -30,14 +24,13 @@ function handleForwardButtonClick(e) {
 
 function handlePushButtonClick(e) {
   let historyIndex = 1;
-  const currentState = history.state;
-  if (currentState) {
+  let currentState = history.state;
+  if (currentState.historyIndex) {
     historyIndex = currentState.historyIndex + 1;
   }
-  _historyCount = historyIndex + 1;
-  const newState = { historyIndex: historyIndex };
-  history.pushState(newState, null, null);
-  const popStateEvent = new PopStateEvent('popstate', { state: newState });
+  currentState.historyIndex = historyIndex;
+  history.pushState(currentState, null, null);
+  const popStateEvent = new PopStateEvent('popstate', { state: currentState });
   dispatchEvent(popStateEvent);
 };
 
@@ -51,11 +44,10 @@ function handlePopToRootButtonClick(e) {
 // Rendering.
 
 function updateUI() {
-  let historyIndex = 0;
   const currentState = history.state;
-  if (currentState) {
-    historyIndex = currentState.historyIndex;
-  }
+  const historyIndex = currentState.historyIndex;
+  const historyCount =
+      (history.length - currentState.firstKnownHistoryLength) + 1;
 
   if (historyIndex < 1) {
     _backButton.disabled = true;
@@ -64,13 +56,13 @@ function updateUI() {
     _backButton.disabled = false;
     _popToRootButton.disabled = false;
   }
-  if (historyIndex == _historyCount - 1) {
+  if (historyIndex == historyCount - 1) {
     _forwardButton.disabled = true;
   } else {
     _forwardButton.disabled = false;
   }
   _historyIndexInfoSpan.innerHTML = "historyIndex: " + historyIndex;
-  _historyCountInfoSpan.innerHTML = "_historyCount: " + _historyCount;
+  _historyCountInfoSpan.innerHTML = "historyCount: " + historyCount;
 };
 
 function initializeUI() {
@@ -116,15 +108,21 @@ function initializeUI() {
 
   const body = document.body;
   body.appendChild(bodyContentDiv);
-
-  updateUI();
 };
 
 
 // Start-up.
 
-function main() {
+async function main() {
+  if (!history.state) {
+    const initialState = {
+        historyIndex: 0,
+        firstKnownHistoryLength: history.length
+    };
+    await history.replaceState(initialState, null, null);
+  }
   initializeUI();
+  updateUI();
   window.addEventListener("popstate", handlePopStateEvent);
 };
 document.addEventListener("DOMContentLoaded", main);
