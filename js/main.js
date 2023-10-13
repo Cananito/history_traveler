@@ -6,7 +6,6 @@ let _pushButton;
 let _popToRootButton;
 let _historyIndexInfoSpan;
 let _historyCountInfoSpan;
-let _lastEventSpan;
 
 
 // State.
@@ -18,7 +17,7 @@ let _historyCount = 1;
 // Event handling.
 
 function handlePopStateEvent(e) {
-  updateUIWithLastEvent(e);
+  updateUI();
 };
 
 function handleBackButtonClick(e) {
@@ -51,12 +50,13 @@ function handlePopToRootButtonClick(e) {
 
 // Rendering.
 
-function updateUIWithLastEvent(lastEvent) {
+function updateUI() {
   let historyIndex = 0;
-  if (lastEvent && lastEvent.state) {
-    const currentState = lastEvent.state;
+  const currentState = history.state;
+  if (currentState) {
     historyIndex = currentState.historyIndex;
   }
+
   if (historyIndex < 1) {
     _backButton.disabled = true;
     _popToRootButton.disabled = true;
@@ -71,7 +71,6 @@ function updateUIWithLastEvent(lastEvent) {
   }
   _historyIndexInfoSpan.innerHTML = "historyIndex: " + historyIndex;
   _historyCountInfoSpan.innerHTML = "_historyCount: " + _historyCount;
-  _lastEventSpan.innerHTML = "Last event: " + lastEvent;
 };
 
 function initializeUI() {
@@ -115,15 +114,10 @@ function initializeUI() {
   bodyContentDiv.appendChild(_historyCountInfoSpan);
   bodyContentDiv.appendChild(document.createElement("br"));
 
-  // last event span
-  _lastEventSpan = document.createElement("span");
-  bodyContentDiv.appendChild(_lastEventSpan);
-  bodyContentDiv.appendChild(document.createElement("br"));
-
   const body = document.body;
   body.appendChild(bodyContentDiv);
 
-  updateUIWithLastEvent(null);
+  updateUI();
 };
 
 
