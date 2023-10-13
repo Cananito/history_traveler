@@ -4,62 +4,69 @@ let _backButton;
 let _forwardButton;
 let _pushButton;
 let _popToRootButton;
-let _historyLengthInfoSpan;
-let _historyStateInfoSpan;
-let _windowLocationInfoSpan;
+let _currentIndexInfoSpan;
+let _historyCountInfoSpan;
 let _lastEventSpan;
+
+
+// State.
+
+let _currentIndex = 0;
+let _historyCount = 1;
 
 
 // Event handling.
 
 function handlePopStateEvent(e) {
-  // TODO: might need to combine this with pushState to keep track of
-  // history index (history.length is all of the tab's history).
+  // TODO: Handle back and forward here instead of button handlers.
+  // That way browser buttons work as well.
+  updateUIWithLastEvent(e);
 };
 
 function handleBackButtonClick(e) {
   history.back();
-  updateUI();
+  _currentIndex -= 1;
+  updateUIWithLastEvent(null);
 };
 
 function handleForwardButtonClick(e) {
   history.forward();
-  updateUI();
+  _currentIndex += 1;
+  updateUIWithLastEvent(null);
 };
 
 function handlePushButtonClick(e) {
-  // TODO
-  // * history.pushState()
-  // OR?
-  // * window.location
-    // * set
-  updateUI();
+  history.pushState(null, null, null);
+  _currentIndex += 1;
+  _historyCount = _currentIndex + 1;
+  updateUIWithLastEvent(null);
 };
 
 function handlePopToRootButtonClick(e) {
-  // TODO
-  // history.go()
-  updateUI();
+  history.go(-_currentIndex);
+  _currentIndex = 0;
+  updateUIWithLastEvent(null);
 };
 
 
 // Rendering.
 
-function updateInfoSpansWithLastEvent(lastEvent) {
-  _historyLengthInfoSpan.innerHTML = "history.length: " + history.length;
-  _historyStateInfoSpan.innerHTML = "history.state: " + history.state;
-  _windowLocationInfoSpan.innerHTML = "window.location: " + window.location.toString();
-  _lastEventSpan.innerHTML = "Last event: " + lastEvent;
-};
-
-function updateUI() {
-  // TODO: length includes all of the tab's history, so won't work.
-  if (history.length < 2) {
+function updateUIWithLastEvent(lastEvent) {
+  if (_currentIndex < 1) {
     _backButton.disabled = true;
-    _forwardButton.disabled = true;
     _popToRootButton.disabled = true;
+  } else {
+    _backButton.disabled = false;
+    _popToRootButton.disabled = false;
   }
-  updateInfoSpansWithLastEvent(null);
+  if (_currentIndex == _historyCount - 1) {
+    _forwardButton.disabled = true;
+  } else {
+    _forwardButton.disabled = false;
+  }
+  _currentIndexInfoSpan.innerHTML = "_currentIndex: " + _currentIndex;
+  _historyCountInfoSpan.innerHTML = "_historyCount: " + _historyCount;
+  _lastEventSpan.innerHTML = "Last event: " + lastEvent;
 };
 
 function initializeUI() {
@@ -94,18 +101,13 @@ function initializeUI() {
   bodyContentDiv.appendChild(document.createElement("br"));
 
   // history length info span
-  _historyLengthInfoSpan = document.createElement("span");
-  bodyContentDiv.appendChild(_historyLengthInfoSpan);
+  _currentIndexInfoSpan = document.createElement("span");
+  bodyContentDiv.appendChild(_currentIndexInfoSpan);
   bodyContentDiv.appendChild(document.createElement("br"));
 
   // history state info span
-  _historyStateInfoSpan = document.createElement("span");
-  bodyContentDiv.appendChild(_historyStateInfoSpan);
-  bodyContentDiv.appendChild(document.createElement("br"));
-
-  // window location info span
-  _windowLocationInfoSpan = document.createElement("span");
-  bodyContentDiv.appendChild(_windowLocationInfoSpan);
+  _historyCountInfoSpan = document.createElement("span");
+  bodyContentDiv.appendChild(_historyCountInfoSpan);
   bodyContentDiv.appendChild(document.createElement("br"));
 
   // last event span
@@ -116,7 +118,7 @@ function initializeUI() {
   const body = document.body;
   body.appendChild(bodyContentDiv);
 
-  updateUI();
+  updateUIWithLastEvent(null);
 };
 
 
