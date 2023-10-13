@@ -4,67 +4,72 @@ let _backButton;
 let _forwardButton;
 let _pushButton;
 let _popToRootButton;
-let _currentIndexInfoSpan;
+let _historyIndexInfoSpan;
 let _historyCountInfoSpan;
 let _lastEventSpan;
 
 
 // State.
 
-let _currentIndex = 0;
+// TODO: This strategy breaks apart when reloading the page.
 let _historyCount = 1;
 
 
 // Event handling.
 
 function handlePopStateEvent(e) {
-  // TODO: Handle back and forward here instead of button handlers.
-  // That way browser buttons work as well.
   updateUIWithLastEvent(e);
 };
 
 function handleBackButtonClick(e) {
   history.back();
-  _currentIndex -= 1;
-  updateUIWithLastEvent(null);
 };
 
 function handleForwardButtonClick(e) {
   history.forward();
-  _currentIndex += 1;
-  updateUIWithLastEvent(null);
 };
 
 function handlePushButtonClick(e) {
-  history.pushState(null, null, null);
-  _currentIndex += 1;
-  _historyCount = _currentIndex + 1;
-  updateUIWithLastEvent(null);
+  let historyIndex = 1;
+  const currentState = history.state;
+  if (currentState) {
+    historyIndex = currentState.historyIndex + 1;
+  }
+  _historyCount = historyIndex + 1;
+  const newState = { historyIndex: historyIndex };
+  history.pushState(newState, null, null);
+  const popStateEvent = new PopStateEvent('popstate', { state: newState });
+  dispatchEvent(popStateEvent);
 };
 
 function handlePopToRootButtonClick(e) {
-  history.go(-_currentIndex);
-  _currentIndex = 0;
-  updateUIWithLastEvent(null);
+  const currentState = history.state;
+  const historyIndex = currentState.historyIndex;
+  history.go(-historyIndex);
 };
 
 
 // Rendering.
 
 function updateUIWithLastEvent(lastEvent) {
-  if (_currentIndex < 1) {
+  let historyIndex = 0;
+  if (lastEvent && lastEvent.state) {
+    const currentState = lastEvent.state;
+    historyIndex = currentState.historyIndex;
+  }
+  if (historyIndex < 1) {
     _backButton.disabled = true;
     _popToRootButton.disabled = true;
   } else {
     _backButton.disabled = false;
     _popToRootButton.disabled = false;
   }
-  if (_currentIndex == _historyCount - 1) {
+  if (historyIndex == _historyCount - 1) {
     _forwardButton.disabled = true;
   } else {
     _forwardButton.disabled = false;
   }
-  _currentIndexInfoSpan.innerHTML = "_currentIndex: " + _currentIndex;
+  _historyIndexInfoSpan.innerHTML = "historyIndex: " + historyIndex;
   _historyCountInfoSpan.innerHTML = "_historyCount: " + _historyCount;
   _lastEventSpan.innerHTML = "Last event: " + lastEvent;
 };
@@ -101,8 +106,8 @@ function initializeUI() {
   bodyContentDiv.appendChild(document.createElement("br"));
 
   // history length info span
-  _currentIndexInfoSpan = document.createElement("span");
-  bodyContentDiv.appendChild(_currentIndexInfoSpan);
+  _historyIndexInfoSpan = document.createElement("span");
+  bodyContentDiv.appendChild(_historyIndexInfoSpan);
   bodyContentDiv.appendChild(document.createElement("br"));
 
   // history state info span
