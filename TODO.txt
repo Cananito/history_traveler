@@ -1,0 +1,1 @@
+* move js to root of project (service workers break otherwise)
